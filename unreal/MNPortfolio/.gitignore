@@ -1,0 +1,12 @@
+/Binaries/
+/DerivedDataCache/
+/Intermediate/
+/Saved/
+/Packaged/
+/.vs/
+/*.sln
+*.VC.db
+*.opensdf
+*.sdf
+Content/MNPortfolio/Imported/Moto/**
+!Content/MNPortfolio/Imported/Moto/.gitkeep

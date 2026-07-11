@@ -1,0 +1,33 @@
+{
+  "name": "MN Animation — Portfolio Interativo",
+  "short_name": "MN Animation",
+  "description": "Modelagem, animação 3D, Unreal Engine e edição de vídeo.",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#05070d",
+  "theme_color": "#05070d",
+  "lang": "pt-BR",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Moto 3D", "url": "/#moto" },
+    { "name": "Motion Forge", "url": "/#forge" },
+    { "name": "Pedir orçamento", "url": "/#edicao" }
+  ]
+}
