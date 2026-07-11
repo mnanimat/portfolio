@@ -42,7 +42,7 @@
     },
     {
       "Name": "GeometryScripting",
-      "Enabled": true
+      "Enabled": false
     },
     {
       "Name": "VariantManagerContent",

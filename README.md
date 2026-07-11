@@ -2,6 +2,18 @@
 
 Experiência web 3D, estúdio de edição de vídeo e protótipo de software de modelagem/animação autoral. O mesmo repositório inclui a preparação de um aplicativo Unreal Engine 5.8 content-only.
 
+## Versão publicada
+
+Produção: <https://mn-animation-3d-portfolio.mnanimat.chatgpt.site>
+
+O site é também um aplicativo web instalável (PWA). No Edge ou Chrome, abra a URL e use o ícone **Instalar aplicativo** na barra de endereço; no Android, use **Adicionar à tela inicial**. Depois da primeira visita, a estrutura visual básica permanece disponível pelo service worker, enquanto o modelo 3D e uploads dependem de conexão.
+
+## Versão Windows
+
+O showroom Unreal Engine foi empacotado em `releases/MNPortfolio-Unreal-Windows-v1.0.zip`. Extraia o arquivo e execute `Install-MNPortfolio.cmd`; a instalação é feita apenas para o usuário atual, sem exigir privilégios administrativos. O pacote cria atalhos na Área de Trabalho e no Menu Iniciar.
+
+O Motion Forge, editor de modelagem e animação, é instalado pelo próprio site com **Instalar aplicativo**. Esta é a versão desktop/PWA do editor e mantém o mesmo código da versão web.
+
 ## Experiências
 
 - **Moto 3D:** GLB real com 160 peças/animações, seleção por clique, vistas, hotspots, wireframe e explosão sincronizada.

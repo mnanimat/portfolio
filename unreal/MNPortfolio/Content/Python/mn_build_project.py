@@ -114,7 +114,10 @@ def _import_motorcycle(world):
     _set(params, ("replace_existing", "bReplaceExisting"), True)
     _set(params, ("force_show_dialog", "bForceShowDialog"), False)
     _set(params, ("destination_name", "DestinationName"), "MN_Moto")
-    _set(params, ("import_level", "ImportLevel"), world.get_current_level(), True)
+    # In UE 5.8 the current Level is exposed by LevelEditorSubsystem, not UWorld.
+    level_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+    import_level = level_subsystem.get_current_level()
+    _set(params, ("import_level", "ImportLevel"), import_level, True)
 
     _log(f"Importando cena: {filename}")
     if not manager.import_scene(cfg.IMPORTED_ROOT, source, params):
@@ -269,13 +272,19 @@ def _create_material(name: str, base_rgb, emissive_rgb=None, strength=0.0):
 
 def _spawn_mesh(mesh, label, location, scale, material=None):
     actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    actor = actor_subsystem.spawn_actor_from_object(mesh, location, unreal.Rotator())
+    # spawn_actor_from_object can crash the UE 5.8 Python commandlet after a
+    # large Interchange import. Creating a StaticMeshActor explicitly is stable
+    # in both headless and interactive Editor sessions.
+    actor = actor_subsystem.spawn_actor_from_class(
+        unreal.StaticMeshActor, location, unreal.Rotator()
+    )
+    component = actor.get_component_by_class(unreal.StaticMeshComponent)
+    component.set_static_mesh(mesh)
     actor.set_actor_label(label)
     actor.set_folder_path("MNPortfolio/Environment")
     actor.set_actor_scale3d(scale)
     _add_tag(actor, cfg.GENERATED_TAG)
     if material is not None:
-        component = actor.get_component_by_class(unreal.StaticMeshComponent)
         component.set_material(0, material)
     return actor
 
@@ -343,7 +352,19 @@ def _create_hud():
     widget_bp = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
         "WBP_MN_HUD", cfg.UI_ROOT, unreal.WidgetBlueprint, factory
     )
-    tree = widget_bp.get_editor_property("widget_tree")
+    try:
+        # UE 5.8 does not expose WidgetBlueprint.widget_tree to Python in every
+        # commandlet build. An empty UserWidget is still a valid runtime class,
+        # so keep the automated build/package pipeline moving in that case.
+        tree = widget_bp.get_editor_property("widget_tree")
+    except Exception as exc:
+        _warn(
+            "UE 5.8 nao expos a arvore visual do WidgetBlueprint no commandlet; "
+            f"continuando com HUD runtime vazio: {exc}"
+        )
+        unreal.BlueprintEditorLibrary.compile_blueprint(widget_bp)
+        unreal.EditorAssetLibrary.save_loaded_asset(widget_bp, False)
+        return widget_bp
     root = unreal.new_object(unreal.CanvasPanel, outer=tree, name="RootCanvas")
     tree.set_editor_property("root_widget", root)
     panel = unreal.new_object(unreal.Border, outer=tree, name="InfoPanel")
@@ -473,17 +494,52 @@ def _place_player_start(center, game_mode_class):
     _set(settings, "default_game_mode", game_mode_class)
 
 
+def _resume_saved_import():
+    """Load the persisted motorcycle/map after a later build stage failed."""
+
+    if not unreal.EditorAssetLibrary.does_asset_exist(cfg.MAP_PATH):
+        raise RuntimeError(f"Mapa salvo nao encontrado para retomar: {cfg.MAP_PATH}")
+    level_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+    if not level_subsystem.load_level(cfg.MAP_PATH):
+        raise RuntimeError(f"Nao foi possivel carregar {cfg.MAP_PATH}")
+    actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+    actors = actor_subsystem.get_all_level_actors()
+    parts = [actor for actor in actors if _has_tag(actor, cfg.BIKE_TAG)]
+    if not parts:
+        raise RuntimeError("O mapa salvo nao contem pecas MN_BIKE_PART para retomar o build.")
+
+    stale_presentation = [
+        actor
+        for actor in actors
+        if _has_tag(actor, cfg.GENERATED_TAG) and not _has_tag(actor, cfg.BIKE_TAG)
+    ]
+    if stale_presentation:
+        actor_subsystem.destroy_actors(stale_presentation)
+    low, high, center = _bounds(parts)
+    _log(f"Retomando importacao salva com {len(parts)} peca(s).")
+    return parts, low, high, center
+
+
 def build_all() -> None:
     """Rebuild imported assets, presentation map, HUD and content-only Blueprints."""
 
     with unreal.ScopedSlowTask(8.0, "Construindo MN Portfolio 3D") as task:
         task.make_dialog(True)
-        task.enter_progress_frame(1.0, "Preparando mapa")
-        world = _prepare_level()
-        task.enter_progress_frame(2.0, "Importando GLB da moto")
-        imported = _import_motorcycle(world)
-        task.enter_progress_frame(1.0, "Preparando pecas e explosao")
-        _parts, low, high, center = _prepare_parts(imported)
+        resume = os.environ.get("MN_RESUME_BUILD", "").lower() in ("1", "true", "yes")
+        if resume:
+            task.enter_progress_frame(4.0, "Retomando importacao salva")
+            _parts, low, high, center = _resume_saved_import()
+        else:
+            task.enter_progress_frame(1.0, "Preparando mapa")
+            world = _prepare_level()
+            task.enter_progress_frame(2.0, "Importando GLB da moto")
+            imported = _import_motorcycle(world)
+            task.enter_progress_frame(1.0, "Preparando pecas e explosao")
+            _parts, low, high, center = _prepare_parts(imported)
+            # Persist the costly Interchange result before building presentation
+            # assets so a later editor-side failure never forces a full reimport.
+            unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
+            unreal.EditorAssetLibrary.save_directory(cfg.IMPORTED_ROOT, False, True)
         task.enter_progress_frame(1.0, "Criando materiais e luzes")
         orbit_distance = _build_environment(low, high, center)
         task.enter_progress_frame(1.0, "Criando HUD")

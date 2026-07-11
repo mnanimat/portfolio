@@ -43,3 +43,13 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# Unreal generated state and local packages
+**/__pycache__/
+/unreal/MNPortfolio/DerivedDataCache/
+/unreal/MNPortfolio/Intermediate/
+/unreal/MNPortfolio/Saved/
+/unreal/MNPortfolio/Packaged/
+/unreal/MNPortfolio/Build/Windows/FileOpenOrder/
+/releases/*.zip
+/releases/*.exe
