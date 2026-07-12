@@ -1,0 +1,42 @@
+CORREÇÃO COMPLETA PARA VERCEL
+
+Arquivos deste pacote:
+- package.json
+- next.config.ts
+- vercel.json
+- app/api/uploads/route.ts
+- app/components/QuoteStudio.tsx
+
+COMO APLICAR
+1. Extraia o ZIP.
+2. Copie os arquivos para as mesmas pastas do repositório, substituindo os antigos.
+3. Remova do repositório, se não forem mais usados:
+   - vite.config.ts
+   - dependências vinext, vite, wrangler e @cloudflare/vite-plugin
+4. No computador, dentro do projeto, execute:
+   npm install
+   npm run build
+5. Envie package.json, package-lock.json e os demais arquivos alterados ao GitHub.
+
+CONFIGURAÇÃO NA VERCEL
+1. Abra o projeto na Vercel.
+2. Em Settings > Build and Deployment:
+   Framework Preset: Next.js
+   Build Command: npm run build
+   Output Directory: sem Override
+3. Abra Storage e crie um Blob Store.
+4. Conecte o Blob Store ao projeto.
+5. A Vercel criará BLOB_READ_WRITE_TOKEN automaticamente.
+6. Faça Redeploy sem cache.
+
+RESULTADO
+- O build passa a gerar .next.
+- O site e as ferramentas 3D continuam no Next.js.
+- O upload deixa de depender do Cloudflare R2.
+- Os arquivos são enviados diretamente do navegador ao Vercel Blob.
+- O briefing do WhatsApp/e-mail inclui os links dos vídeos enviados.
+
+ATENÇÃO
+O armazenamento Vercel Blob possui limites e cobrança conforme o plano.
+Uploads públicos geram URLs públicas não adivinháveis. Não use este fluxo para
+documentos confidenciais sem implementar autenticação e expiração.
