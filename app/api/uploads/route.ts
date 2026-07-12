@@ -1,5 +1,3 @@
-"use server";
-
 import {
   handleUpload,
   type HandleUploadBody,
@@ -17,24 +15,6 @@ const ACCEPTED_CONTENT_TYPES = [
   "video/ogg",
 ];
 
-function safeName(pathname: string): string {
-  const baseName = pathname.replace(/^.*[\\/]/, "");
-  const extension = baseName.includes(".")
-    ? `.${baseName.split(".").pop()?.toLowerCase()}`
-    : "";
-
-  const stem = baseName
-    .replace(/\.[^.]*$/, "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]+/g, "-")
-    .replace(/^[-_]+|[-_]+$/g, "")
-    .slice(0, 70);
-
-  return `briefings/${new Date().toISOString().slice(0, 10)}/${stem || "clip"}${extension}`;
-}
-
 export async function POST(request: Request): Promise<Response> {
   try {
     const body = (await request.json()) as HandleUploadBody;
@@ -42,7 +22,7 @@ export async function POST(request: Request): Promise<Response> {
     const response = await handleUpload({
       request,
       body,
-      onBeforeGenerateToken: async (pathname, clientPayload) => {
+      onBeforeGenerateToken: async (_pathname, clientPayload) => {
         let payload: { source?: string } = {};
 
         if (clientPayload) {
