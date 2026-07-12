@@ -4,6 +4,7 @@ import {
 } from "@vercel/blob/client";
 
 const MAX_FILE_BYTES = 90 * 1024 * 1024;
+
 const ACCEPTED_CONTENT_TYPES = [
   "video/mp4",
   "video/quicktime",
@@ -50,7 +51,8 @@ export async function POST(request: Request): Promise<Response> {
       onUploadCompleted: async ({ blob }) => {
         console.info("Upload concluído", {
           pathname: blob.pathname,
-          size: blob.size,
+          url: blob.url,
+          contentType: blob.contentType,
           uploadedAt: new Date().toISOString(),
         });
       },
